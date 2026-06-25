@@ -5,6 +5,7 @@ import { Send, Sparkles, MessageSquare, Plus, Trash2, ChevronLeft, ChevronRight 
 import { AppShell } from "@/components/AppShell";
 import { Markdown, CopyButton } from "@/components/Markdown";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/chat")({ component: ChatPage });
 
@@ -25,7 +26,7 @@ function ChatPage() {
   async function loadChats() {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/chats", {
+      const res = await apiFetch("/api/chats", {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -52,7 +53,7 @@ function ChatPage() {
     }
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/chats/${chatId}`, {
+      const res = await apiFetch(`/api/chats/${chatId}`, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -72,7 +73,7 @@ function ChatPage() {
     if (!confirm("Are you sure you want to delete this conversation?")) return;
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/chats/${chatId}`, {
+      const res = await apiFetch(`/api/chats/${chatId}`, {
         method: "DELETE",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -104,7 +105,7 @@ function ChatPage() {
       
       // If no active chat, create one first
       if (!chatId) {
-        const createRes = await fetch("/api/chats", {
+        const createRes = await apiFetch("/api/chats", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -120,7 +121,7 @@ function ChatPage() {
       }
 
       // Stream assistant response
-      const res = await fetch(`/api/chats/${chatId}/messages`, {
+      const res = await apiFetch(`/api/chats/${chatId}/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

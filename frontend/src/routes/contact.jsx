@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Send, ArrowLeft, Mail, MessageSquare, Shield, Globe } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/contact")({ component: ContactPage });
 
@@ -20,7 +21,7 @@ function ContactPage() {
     setBusy(true);
 
     try {
-      const res = await fetch("/api/contact", {
+      const res = await apiFetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, subject, message }),

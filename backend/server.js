@@ -23,7 +23,14 @@ const adminRouter = require("./routes/admin");
 const app = express();
 
 // Middleware Setup
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL
+      ? [process.env.FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"]
+      : true, // Allow all origins in development
+    credentials: true,
+  })
+);
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

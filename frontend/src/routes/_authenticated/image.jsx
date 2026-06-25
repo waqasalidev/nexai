@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ImageIcon, Loader2, Download, Eye, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/image")({ component: ImagePage });
 
@@ -16,7 +17,7 @@ function ImagePage() {
   async function loadHistory() {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/history?tool=image", {
+      const res = await apiFetch("/api/history?tool=image", {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -39,7 +40,7 @@ function ImagePage() {
     setImageUrl("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/history/run-tool", {
+      const res = await apiFetch("/api/history/run-tool", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

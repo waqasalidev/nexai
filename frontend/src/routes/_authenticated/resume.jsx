@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { FileSignature, Loader2, Plus, Trash2, Download, Save, Sparkles, Printer } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/resume")({ component: ResumePage });
 
@@ -24,7 +25,7 @@ function ResumePage() {
   async function loadResumes() {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/resumes", {
+      const res = await apiFetch("/api/resumes", {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -65,7 +66,7 @@ function ResumePage() {
     setGenerating(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/resumes/generate", {
+      const res = await apiFetch("/api/resumes/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,7 +99,7 @@ function ResumePage() {
       const url = activeResumeId ? `/api/resumes/${activeResumeId}` : "/api/resumes";
       const method = activeResumeId ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -126,7 +127,7 @@ function ResumePage() {
     if (!confirm("Are you sure you want to delete this resume?")) return;
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/resumes/${id}`, {
+      const res = await apiFetch(`/api/resumes/${id}`, {
         method: "DELETE",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),

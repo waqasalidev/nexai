@@ -5,6 +5,7 @@ import { Upload, FileText, Loader2, Sparkles, MessageSquare, Send, Trash2, Arrow
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 import { Markdown } from "@/components/Markdown";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/pdf")({ component: PdfPage });
 
@@ -26,7 +27,7 @@ function PdfPage() {
   async function loadDocuments() {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/documents", {
+      const res = await apiFetch("/api/documents", {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -52,7 +53,7 @@ function PdfPage() {
     }
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/documents/${docId}`, {
+      const res = await apiFetch(`/api/documents/${docId}`, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -80,7 +81,7 @@ function PdfPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/documents/upload", {
+      const res = await apiFetch("/api/documents/upload", {
         method: "POST",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -112,7 +113,7 @@ function PdfPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/documents/${activeDocId}/ask`, {
+      const res = await apiFetch(`/api/documents/${activeDocId}/ask`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -148,7 +149,7 @@ function PdfPage() {
     if (!confirm("Are you sure you want to delete this document?")) return;
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/documents/${docId}`, {
+      const res = await apiFetch(`/api/documents/${docId}`, {
         method: "DELETE",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),

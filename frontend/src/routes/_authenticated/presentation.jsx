@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Loader2, Play, ChevronLeft, ChevronRight, Save, Plus, Trash2, BookOpen } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/presentation")({ component: PresentationPage });
 
@@ -19,7 +20,7 @@ function PresentationPage() {
   async function loadPresentations() {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/presentations", {
+      const res = await apiFetch("/api/presentations", {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -55,7 +56,7 @@ function PresentationPage() {
     setSlides([]);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/presentations/generate", {
+      const res = await apiFetch("/api/presentations/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -83,7 +84,7 @@ function PresentationPage() {
     if (!confirm("Are you sure you want to delete this presentation?")) return;
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/presentations/${id}`, {
+      const res = await apiFetch(`/api/presentations/${id}`, {
         method: "DELETE",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),

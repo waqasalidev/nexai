@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Markdown, CopyButton } from "@/components/Markdown";
+import { apiFetch } from "@/lib/api";
 
 export function ToolPage({
   title,
@@ -25,7 +26,7 @@ export function ToolPage({
     setOut("");
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/history/run-tool", {
+      const res = await apiFetch("/api/history/run-tool", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

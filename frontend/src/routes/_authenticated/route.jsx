@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/_authenticated")({
       throw redirect({ to: "/auth" });
     }
     try {
-      const res = await fetch("/api/auth/me", {
+      const res = await apiFetch("/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Unauthorized");

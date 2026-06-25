@@ -5,6 +5,7 @@ import { Users, CreditCard, Sparkles, Mail, ShieldAlert, Loader2, ArrowRight, Tr
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/admin")({ component: AdminPage });
 
@@ -26,21 +27,21 @@ function AdminPage() {
       const token = localStorage.getItem("token");
       
       // Load stats
-      const statsRes = await fetch("/api/admin/stats", {
+      const statsRes = await apiFetch("/api/admin/stats", {
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       });
       const statsData = await statsRes.json();
       if (statsRes.ok) setStats(statsData.stats);
 
       // Load users
-      const usersRes = await fetch("/api/admin/users", {
+      const usersRes = await apiFetch("/api/admin/users", {
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       });
       const usersData = await usersRes.json();
       if (usersRes.ok) setAdminUsers(usersData.users);
 
       // Load messages
-      const msgRes = await fetch("/api/admin/messages", {
+      const msgRes = await apiFetch("/api/admin/messages", {
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       });
       const msgData = await msgRes.json();
@@ -62,7 +63,7 @@ function AdminPage() {
     const nextRole = currentRole === "admin" ? "user" : "admin";
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/admin/users/${userId}/role`, {
+      const res = await apiFetch(`/api/admin/users/${userId}/role`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -81,7 +82,7 @@ function AdminPage() {
   async function updatePlan(userId, plan) {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/admin/users/${userId}/plan`, {
+      const res = await apiFetch(`/api/admin/users/${userId}/plan`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -101,7 +102,7 @@ function AdminPage() {
     if (!confirm("Delete this message?")) return;
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/admin/messages/${msgId}`, {
+      const res = await apiFetch(`/api/admin/messages/${msgId}`, {
         method: "DELETE",
         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       });

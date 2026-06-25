@@ -20,6 +20,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -48,7 +49,7 @@ function Dashboard() {
     setLoadingHistory(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/history", {
+      const res = await apiFetch("/api/history", {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },

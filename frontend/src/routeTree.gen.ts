@@ -13,7 +13,6 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedTranslateRouteImport } from './routes/_authenticated/translate'
 import { Route as AuthenticatedResumeRouteImport } from './routes/_authenticated/resume'
 import { Route as AuthenticatedPresentationRouteImport } from './routes/_authenticated/presentation'
@@ -43,11 +42,6 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTranslateRoute = AuthenticatedTranslateRouteImport.update({
@@ -123,7 +117,6 @@ export interface FileRoutesByFullPath {
   '/presentation': typeof AuthenticatedPresentationRoute
   '/resume': typeof AuthenticatedResumeRoute
   '/translate': typeof AuthenticatedTranslateRoute
-  '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,7 +133,6 @@ export interface FileRoutesByTo {
   '/presentation': typeof AuthenticatedPresentationRoute
   '/resume': typeof AuthenticatedResumeRoute
   '/translate': typeof AuthenticatedTranslateRoute
-  '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,7 +151,6 @@ export interface FileRoutesById {
   '/_authenticated/presentation': typeof AuthenticatedPresentationRoute
   '/_authenticated/resume': typeof AuthenticatedResumeRoute
   '/_authenticated/translate': typeof AuthenticatedTranslateRoute
-  '/api/chat': typeof ApiChatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -178,7 +169,6 @@ export interface FileRouteTypes {
     | '/presentation'
     | '/resume'
     | '/translate'
-    | '/api/chat'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -195,7 +185,6 @@ export interface FileRouteTypes {
     | '/presentation'
     | '/resume'
     | '/translate'
-    | '/api/chat'
   id:
     | '__root__'
     | '/'
@@ -213,7 +202,6 @@ export interface FileRouteTypes {
     | '/_authenticated/presentation'
     | '/_authenticated/resume'
     | '/_authenticated/translate'
-    | '/api/chat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -221,7 +209,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
-  ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,13 +239,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/translate': {
@@ -377,18 +357,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
-  ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.jsx'
-import type { startInstance } from './start.js'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
