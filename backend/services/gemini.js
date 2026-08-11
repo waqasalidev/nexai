@@ -77,24 +77,28 @@ function classifyError(error) {
  */
 async function executeWithModelFallback(apiCallFn) {
   let lastError = null;
+  const maxPasses = 2;
 
-  for (const modelName of MODEL_FALLBACK_CHAIN) {
-    try {
-      const model = getModel(modelName);
-      return await apiCallFn(model, modelName);
-    } catch (err) {
-      lastError = err;
-      const isRateLimit = err.status === 429 || 
-        (err.message && (err.message.includes("429") || err.message.includes("Quota exceeded")));
+  for (let pass = 1; pass <= maxPasses; pass++) {
+    for (const modelName of MODEL_FALLBACK_CHAIN) {
+      try {
+        const model = getModel(modelName);
+        return await apiCallFn(model, modelName);
+      } catch (err) {
+        lastError = err;
+        const isRateLimit = err.status === 429 || 
+          (err.message && (err.message.includes("429") || err.message.includes("Quota exceeded")));
 
-      if (isRateLimit) {
-        console.warn(`[Gemini Service] Model ${modelName} hit 429 quota limit. Falling back to next model...`);
-        continue; // Immediately try next model in fallback chain
-      }
+        if (isRateLimit) {
+          console.warn(`[Gemini Service] Model ${modelName} hit 429 quota limit (Pass ${pass}). Waiting 1.5s backoff...`);
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          continue;
+        }
 
-      // If it's an auth error or non-retryable error, fail immediately
-      if (err.status === 401 || err.status === 403 || (err.message && err.message.includes("API key"))) {
-        throw classifyError(err);
+        // If it's an auth error or non-retryable error, fail immediately
+        if (err.status === 401 || err.status === 403 || (err.message && err.message.includes("API key"))) {
+          throw classifyError(err);
+        }
       }
     }
   }

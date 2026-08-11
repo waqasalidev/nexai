@@ -66,16 +66,31 @@ async function getWorkspaceHistory(req, res) {
 // @route   POST /api/history/run-tool
 // @access  Private
 async function runTool(req, res) {
+  const startTime = Date.now();
   const { prompt, system, tool, title, options } = req.body;
   try {
     if (!isDBConnected()) {
       return res.status(503).json({
+        success: false,
         message: "Database service is temporarily unavailable. Please try again later.",
+        error: {
+          code: "DATABASE_UNAVAILABLE",
+          message: "Database service is temporarily unavailable.",
+          status: 503,
+        },
       });
     }
 
     if (!prompt || !tool) {
-      return res.status(400).json({ message: "Prompt and tool type are required" });
+      return res.status(400).json({
+        success: false,
+        message: "Prompt and tool type are required",
+        error: {
+          code: "INVALID_INPUT",
+          message: "Prompt and tool type are required",
+          status: 400,
+        },
+      });
     }
 
     // Handle Image Generation
@@ -104,7 +119,7 @@ async function runTool(req, res) {
       });
     }
 
-    // Handle standard text-based tools
+    // Handle standard text-based tools (notes, resume, cover-letter, translate, code, etc.)
     const textOutput = await generateText(prompt, system);
 
     // Store in AI usage history
@@ -123,12 +138,28 @@ async function runTool(req, res) {
 
     return res.status(200).json({ success: true, text: textOutput, usage });
   } catch (error) {
-    console.error(`AI Tool Error (${tool}):`, error);
+    const duration = Date.now() - startTime;
     const statusCode = error.statusCode || 500;
+    const errorCode = error.code || "TOOL_EXECUTION_ERROR";
+    const errorMessage = error.message || "Failed to execute AI tool";
+
+    console.error(`\n--- AI TOOL ERROR REPORT ---`);
+    console.error(`TOOL: ${tool}`);
+    console.error(`HTTP STATUS: ${statusCode}`);
+    console.error(`ERROR TYPE: ${errorCode}`);
+    console.error(`ERROR MESSAGE: ${errorMessage}`);
+    console.error(`AI PROVIDER: ${tool === "image" ? "Pollinations/OpenAI" : "Google Gemini"}`);
+    console.error(`MODEL: ${tool === "image" ? "FLUX/DALL-E" : "gemini-2.5-flash"}`);
+    console.error(`REQUEST DURATION: ${duration}ms\n`);
+
     return res.status(statusCode).json({
-      message: error.message || `Failed to execute AI tool ${tool}`,
-      code: error.code || "TOOL_EXECUTION_ERROR",
-      error: error.message,
+      success: false,
+      message: errorMessage,
+      error: {
+        code: errorCode,
+        message: errorMessage,
+        status: statusCode,
+      },
     });
   }
 }

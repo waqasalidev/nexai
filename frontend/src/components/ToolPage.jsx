@@ -42,14 +42,18 @@ export function ToolPage({
       const data = await res.json().catch(() => ({}));
       
       if (!res.ok) {
-        if (res.status === 429) {
-          throw new Error("AI usage limit reached. Please try again in a few seconds.");
+        if (res.status === 401) {
+          throw new Error("Your session has expired. Please log in again.");
+        } else if (res.status === 403) {
+          throw new Error("AI service authorization failed.");
         } else if (res.status === 408) {
-          throw new Error("The AI request timed out. Please try again.");
+          throw new Error("AI request timed out. Please try again.");
+        } else if (res.status === 429) {
+          throw new Error("AI usage limit reached. Please try again later.");
         } else if (res.status === 503) {
-          throw new Error("AI service is temporarily unavailable. Please try again later.");
+          throw new Error("AI service is temporarily unavailable.");
         }
-        throw new Error(data.message || "AI request failed");
+        throw new Error(data.error?.message || data.message || "Something went wrong while processing the request.");
       }
 
       setOut(data.text);
