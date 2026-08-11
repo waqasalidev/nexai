@@ -144,24 +144,59 @@ async function generateImage(rawPrompt, options = {}) {
     }
   }
 
-  // 3. Fallback High-Quality AI Image Provider Engine
-  let lastImageError = null;
-  const maxRetries = 2;
+  // 3. Check for HuggingFace API Token
+  const hfToken = process.env.HF_TOKEN || process.env.HUGGINGFACE_API_KEY;
+  if (hfToken) {
+    try {
+      const response = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${hfToken}`,
+        },
+        body: JSON.stringify({ inputs: prompt }),
+      });
 
-  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        if (buffer.length > 100) {
+          const relativeUrl = saveImageBuffer(buffer, "png");
+          return {
+            url: relativeUrl,
+            prompt: rawPrompt,
+            enhancedPrompt: prompt,
+            createdAt: new Date().toISOString(),
+          };
+        }
+      }
+    } catch (hfErr) {
+      console.warn("HuggingFace Inference API warning:", hfErr.message);
+    }
+  }
+
+  // 3. Fallback High-Quality AI Image Provider Engine (Multi-Endpoint Rotation)
+  const imageEndpoints = [
+    (p, s) => `https://image.pollinations.ai/p/${p}?width=${width}&height=${height}&seed=${s}&nologo=true&model=flux`,
+    (p, s) => `https://image.pollinations.ai/p/${p}?width=${width}&height=${height}&seed=${s}&nologo=true&model=turbo`,
+    (p, s) => `https://image.pollinations.ai/p/${p}?width=${width}&height=${height}&seed=${s}&nologo=true`,
+  ];
+
+  let lastImageError = null;
+
+  for (let attempt = 0; attempt < imageEndpoints.length; attempt++) {
     try {
       const seed = Math.floor(Math.random() * 1000000);
       const escapedPrompt = encodeURIComponent(prompt);
-      
-      const providerUrl = `https://image.pollinations.ai/p/${escapedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+      const providerUrl = imageEndpoints[attempt](escapedPrompt, seed);
       
       const imageRes = await fetch(providerUrl, {
-        signal: AbortSignal.timeout(30000), // 30s timeout protection
+        signal: AbortSignal.timeout(25000),
       });
 
-      if (imageRes.status === 429 && attempt <= maxRetries) {
-        console.warn(`[Image Generation] Provider rate limited (429). Retry attempt ${attempt}/${maxRetries} in 1.5s...`);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (imageRes.status === 429 && attempt < imageEndpoints.length - 1) {
+        console.warn(`[Image Generation] Endpoint ${attempt + 1} hit 429 rate limit. Trying next endpoint...`);
+        await new Promise((resolve) => setTimeout(resolve, 800));
         continue;
       }
 
@@ -189,9 +224,8 @@ async function generateImage(rawPrompt, options = {}) {
       };
     } catch (err) {
       lastImageError = err;
-      if (err.status === 429 && attempt <= maxRetries) {
-        console.warn(`[Image Generation] Attempt ${attempt} hit rate limit. Retrying...`);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (attempt < imageEndpoints.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
         continue;
       }
     }
