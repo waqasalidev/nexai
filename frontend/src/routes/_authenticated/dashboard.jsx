@@ -16,6 +16,7 @@ import {
   History,
   FileCode,
   Layers,
+  Loader2,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/hooks/use-auth";

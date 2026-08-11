@@ -1,12 +1,22 @@
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ImageIcon, Loader2, Download, Eye, Sparkles } from "lucide-react";
+import { ImageIcon, Loader2, Download, Eye, Sparkles, ImageOff } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/image")({ component: ImagePage });
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+function resolveImageUrl(url) {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+}
 
 function ImagePage() {
   const [prompt, setPrompt] = useState("");
@@ -47,24 +57,46 @@ function ImagePage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          prompt,
+          prompt: prompt.trim(),
           tool: "image",
-          title: prompt.slice(0, 50),
+          title: prompt.trim().slice(0, 50),
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to generate image");
-      
-      // The output text contains the generated image URL
-      setImageUrl(data.text);
+
+      const finalUrl = data.image?.url || data.text;
+      if (!finalUrl) throw new Error("No image URL received from server");
+
+      setImageUrl(finalUrl);
       toast.success("Image generated successfully!");
-      loadHistory();
+      await loadHistory();
     } catch (e) {
-      toast.error(e.message);
+      toast.error(e.message || "Image generation failed");
     } finally {
       setBusy(false);
     }
   }
+
+  async function handleDownload(url) {
+    try {
+      const resolved = resolveImageUrl(url);
+      const res = await fetch(resolved);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `nexai-artwork-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      window.open(resolveImageUrl(url), "_blank");
+    }
+  }
+
+  const currentResolvedUrl = resolveImageUrl(imageUrl);
 
   return (
     <AppShell title="AI Image Generator">
@@ -80,7 +112,7 @@ function ImagePage() {
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="e.g. A cyberpunk wizard reading ancient scrolls in a neon-lit library, digital art..."
+                placeholder="e.g. A futuristic cyberpunk city at night, neon lighting, cinematic digital art..."
                 rows={5}
                 className="w-full rounded-xl bg-input border border-border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40 min-h-[120px] resize-none"
               />
@@ -92,7 +124,7 @@ function ImagePage() {
               className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-semibold text-primary-foreground glow-sm disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.01] transition"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-              {busy ? "Generating (may take 10s)..." : "Generate Artwork"}
+              {busy ? "Creating quantum pixels..." : "Generate Artwork"}
             </button>
           </div>
         </div>
@@ -109,10 +141,10 @@ function ImagePage() {
 
             <div className="w-full flex items-center justify-between mb-4 border-b border-border/30 pb-3 shrink-0">
               <span className="text-sm font-medium">Render Preview</span>
-              {imageUrl && (
+              {currentResolvedUrl && (
                 <div className="flex items-center gap-2">
                   <a
-                    href={imageUrl}
+                    href={currentResolvedUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="p-1.5 rounded-lg border border-border hover:bg-white/[0.05] transition text-muted-foreground hover:text-foreground"
@@ -120,26 +152,28 @@ function ImagePage() {
                   >
                     <Eye className="h-4 w-4" />
                   </a>
-                  <a
-                    href={imageUrl}
-                    download="nexai-generation.jpg"
+                  <button
+                    onClick={() => handleDownload(imageUrl)}
                     className="p-1.5 rounded-lg border border-border hover:bg-white/[0.05] transition text-muted-foreground hover:text-foreground"
-                    title="Download"
+                    title="Download Image"
                   >
                     <Download className="h-4 w-4" />
-                  </a>
+                  </button>
                 </div>
               )}
             </div>
 
             <div className="flex-1 w-full flex items-center justify-center">
-              {imageUrl ? (
+              {currentResolvedUrl ? (
                 <motion.img
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  src={imageUrl}
+                  src={currentResolvedUrl}
                   alt="AI Generated Artwork"
                   className="max-h-[320px] rounded-xl object-contain border border-border/50 shadow-2xl"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
               ) : (
                 <div className="text-center py-20 text-muted-foreground flex flex-col items-center gap-3">
@@ -161,26 +195,32 @@ function ImagePage() {
               </div>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                {history.map((item) => (
-                  <div
-                    key={item._id}
-                    onClick={() => setImageUrl(item.output)}
-                    className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border/50 bg-black/20 hover:scale-[1.03] hover:border-accent/40 transition-all shadow"
-                    title={item.title}
-                  >
-                    <img
-                      src={item.output}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center">
-                      <span className="text-white text-xs font-medium px-2 text-center line-clamp-2">
-                        {item.title}
-                      </span>
+                {history.map((item) => {
+                  const itemUrl = resolveImageUrl(item.output);
+                  return (
+                    <div
+                      key={item._id}
+                      onClick={() => setImageUrl(item.output)}
+                      className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border/50 bg-black/20 hover:scale-[1.03] hover:border-accent/40 transition-all shadow"
+                      title={item.title}
+                    >
+                      <img
+                        src={itemUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23666'><rect width='100%' height='100%' fill='%23111'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23888' font-size='12'>Image</text></svg>";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center">
+                        <span className="text-white text-xs font-medium px-2 text-center line-clamp-2">
+                          {item.title}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -189,3 +229,4 @@ function ImagePage() {
     </AppShell>
   );
 }
+

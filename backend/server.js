@@ -5,7 +5,7 @@ const morgan = require("morgan");
 const path = require("path");
 const fs = require("fs");
 
-const connectDB = require("./config/db");
+const { connectDB } = require("./config/db");
 const seedDatabase = require("./utils/seeder");
 
 // Import Routers
@@ -35,17 +35,16 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Setup uploads folder directory serving
+// Setup uploads folder directory serving (including images)
 const uploadsDir = path.join(__dirname, "uploads");
+const imagesDir = path.join(uploadsDir, "images");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir, { recursive: true });
+}
 app.use("/uploads", express.static(uploadsDir));
-
-// Connect to MongoDB & Seed Data
-connectDB().then(() => {
-  seedDatabase();
-});
 
 // API Routes Mounting
 app.use("/api/auth", authRouter);
@@ -66,15 +65,27 @@ app.get("/", (req, res) => {
 
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {
-  console.error("Unhandle Server Error:", err.stack);
+  console.error("Unhandled Server Error:", err.stack);
   res.status(500).json({
     message: "A critical error occurred inside the system server circuits.",
     error: process.env.NODE_ENV === "development" ? err.message : undefined,
   });
 });
 
-// Port Listener
+// Port Listener & Production-Safe MongoDB Connection
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`>>> Express server is running on port ${PORT}`);
-});
+
+async function startServer() {
+  try {
+    await connectDB();
+    await seedDatabase();
+    app.listen(PORT, () => {
+      console.log(`>>> Express server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Fatal Error during server startup:", error.message);
+    process.exit(1);
+  }
+}
+
+startServer();

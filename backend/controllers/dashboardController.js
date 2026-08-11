@@ -3,36 +3,62 @@ const Presentation = require("../models/Presentation");
 const Document = require("../models/Document");
 const Chat = require("../models/Chat");
 const AIUsage = require("../models/AIUsage");
+const { isDBConnected } = require("../config/db");
 const { generateText } = require("../services/gemini");
+const { generateImage } = require("../services/imageGeneration");
 
-// @desc    Get user's workspace history and statistics
+// @desc    Get user's workspace history and statistics (or specific tool history via query param)
 // @route   GET /api/history
 // @access  Private
 async function getWorkspaceHistory(req, res) {
   try {
+    if (!isDBConnected()) {
+      return res.status(503).json({
+        message: "Database service is temporarily unavailable. Please try again later.",
+      });
+    }
+
     const userId = req.user.id;
 
-    const resumes = await Resume.find({ user: userId }).select("title updatedAt").sort({ updatedAt: -1 });
-    const presentations = await Presentation.find({ user: userId }).select("topic slides createdAt").sort({ createdAt: -1 });
-    const documents = await Document.find({ user: userId }).select("fileName fileSize createdAt").sort({ createdAt: -1 });
-    const chats = await Chat.find({ user: userId }).select("title updatedAt").sort({ updatedAt: -1 });
-    
-    const aiUsageCount = await AIUsage.countDocuments({ user: userId });
+    // Handle tool-specific history requests (e.g. GET /api/history?tool=image)
+    if (req.query.tool) {
+      const history = await AIUsage.find({ user: userId, tool: req.query.tool })
+        .sort({ createdAt: -1 })
+        .limit(50);
+      return res.status(200).json({ success: true, history: history || [] });
+    }
 
-    const totalItems = resumes.length + presentations.length + documents.length + chats.length;
+    // Parallel execution for workspace records
+    const [resumes, presentations, documents, chats, aiUsageCount] = await Promise.all([
+      Resume.find({ user: userId }).select("title updatedAt createdAt").sort({ updatedAt: -1 }),
+      Presentation.find({ user: userId }).select("topic slides createdAt").sort({ createdAt: -1 }),
+      Document.find({ user: userId }).select("fileName fileSize createdAt").sort({ createdAt: -1 }),
+      Chat.find({ user: userId }).select("title updatedAt createdAt").sort({ updatedAt: -1 }),
+      AIUsage.countDocuments({ user: userId }),
+    ]);
 
-    res.status(200).json({
+    const totalItems =
+      (resumes ? resumes.length : 0) +
+      (presentations ? presentations.length : 0) +
+      (documents ? documents.length : 0) +
+      (chats ? chats.length : 0);
+
+    return res.status(200).json({
       summary: {
         totalItems,
-        aiUsageCount,
+        aiUsageCount: aiUsageCount || 0,
       },
-      resumes,
-      presentations,
-      documents,
-      chats,
+      resumes: resumes || [],
+      presentations: presentations || [],
+      documents: documents || [],
+      chats: chats || [],
     });
   } catch (error) {
-    res.status(500).json({ message: "Failed to gather workspace history", error: error.message });
+    console.error("Workspace History Error:", error);
+    return res.status(500).json({
+      message: "Failed to gather workspace history",
+      error: error.message,
+    });
   }
 }
 
@@ -40,28 +66,37 @@ async function getWorkspaceHistory(req, res) {
 // @route   POST /api/history/run-tool
 // @access  Private
 async function runTool(req, res) {
-  const { prompt, system, tool, title } = req.body;
+  const { prompt, system, tool, title, options } = req.body;
   try {
+    if (!isDBConnected()) {
+      return res.status(503).json({
+        message: "Database service is temporarily unavailable. Please try again later.",
+      });
+    }
+
     if (!prompt || !tool) {
       return res.status(400).json({ message: "Prompt and tool type are required" });
     }
 
     // Handle Image Generation
     if (tool === "image") {
-      const escapedPrompt = encodeURIComponent(prompt.trim());
-      const seed = Math.floor(Math.random() * 1000000);
-      const generatedImageUrl = `https://image.pollinations.ai/p/${escapedPrompt}?width=768&height=768&seed=${seed}&nologo=true`;
+      const imageResult = await generateImage(prompt, options);
 
-      // Store in AI usage history
+      // Store in AI usage history upon successful generation
       const usage = await AIUsage.create({
         user: req.user.id,
-        tool,
+        tool: "image",
         title: title || prompt.slice(0, 50),
-        prompt,
-        output: generatedImageUrl,
+        prompt: prompt,
+        output: imageResult.url,
       });
 
-      return res.status(200).json({ text: generatedImageUrl, usage });
+      return res.status(200).json({
+        success: true,
+        text: imageResult.url,
+        image: imageResult,
+        usage,
+      });
     }
 
     // Handle standard text-based tools
@@ -76,10 +111,13 @@ async function runTool(req, res) {
       output: textOutput,
     });
 
-    res.status(200).json({ text: textOutput, usage });
+    return res.status(200).json({ success: true, text: textOutput, usage });
   } catch (error) {
     console.error(`AI Tool Error (${tool}):`, error);
-    res.status(500).json({ message: `Failed to execute AI tool ${tool}`, error: error.message });
+    return res.status(500).json({
+      message: error.message || `Failed to execute AI tool ${tool}`,
+      error: error.message,
+    });
   }
 }
 
@@ -87,3 +125,4 @@ module.exports = {
   getWorkspaceHistory,
   runTool,
 };
+
