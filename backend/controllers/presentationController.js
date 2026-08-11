@@ -38,18 +38,23 @@ async function generatePresentation(req, res) {
     });
 
     // Log AI usage
-    await AIUsage.create({
-      user: req.user.id,
-      tool: "presentation",
-      title: topic,
-      prompt: `Topic: ${topic}, Slides: ${count}`,
-      output: JSON.stringify(slideDeck.slides),
-    });
+    try {
+      await AIUsage.create({
+        user: req.user.id,
+        tool: "presentation",
+        title: topic,
+        prompt: `Topic: ${topic}, Slides: ${count}`,
+        output: JSON.stringify(slideDeck.slides),
+      });
+    } catch (dbErr) {
+      console.error("Failed to log presentation AIUsage:", dbErr.message);
+    }
 
     res.status(201).json({ presentation });
   } catch (error) {
     console.error("Presentation generation error:", error);
-    res.status(500).json({ message: "Failed to generate presentation", error: error.message });
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ message: error.message || "Failed to generate presentation", error: error.message });
   }
 }
 

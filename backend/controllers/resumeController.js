@@ -35,18 +35,23 @@ async function generateResume(req, res) {
     });
 
     // Log AI Usage
-    await AIUsage.create({
-      user: req.user.id,
-      tool: "resume",
-      title: resume.title,
-      prompt,
-      output: JSON.stringify(resumeDetails),
-    });
+    try {
+      await AIUsage.create({
+        user: req.user.id,
+        tool: "resume",
+        title: resume.title,
+        prompt,
+        output: JSON.stringify(resumeDetails),
+      });
+    } catch (dbErr) {
+      console.error("Failed to log resume AIUsage:", dbErr.message);
+    }
 
     res.status(201).json({ resume });
   } catch (error) {
     console.error("Resume generation error:", error);
-    res.status(500).json({ message: "Failed to generate resume", error: error.message });
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ message: error.message || "Failed to generate resume", error: error.message });
   }
 }
 

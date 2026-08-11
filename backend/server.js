@@ -58,9 +58,37 @@ app.use("/api/subscriptions", subscriptionsRouter);
 app.use("/api/history", historyRouter);
 app.use("/api/admin", adminRouter);
 
-// Base Route
+// Base Route & Server Diagnostic Endpoint
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to the NexAI Full-Stack SaaS API Portal" });
+});
+
+app.get("/api/ai/diagnostic", async (req, res) => {
+  try {
+    const { generateText } = require("./services/gemini");
+    const { isDBConnected } = require("./config/db");
+    const configured = !!process.env.GEMINI_API_KEY;
+    if (!configured) {
+      return res.status(500).json({ configured: false, provider: "gemini", status: "missing_api_key" });
+    }
+    const testOutput = await generateText("Test connection in 3 words.");
+    res.json({
+      configured: true,
+      provider: "gemini",
+      model: "gemini-2.5-flash",
+      status: "working",
+      dbConnected: isDBConnected(),
+      outputSnippet: testOutput.trim().slice(0, 30),
+    });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({
+      configured: !!process.env.GEMINI_API_KEY,
+      provider: "gemini",
+      status: "failed",
+      code: err.statusCode || 500,
+      message: err.message,
+    });
+  }
 });
 
 // Global Error Handler Middleware
