@@ -39,11 +39,26 @@ export function ToolPage({
           title: input.slice(0, 80),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "AI request failed");
+      const data = await res.json().catch(() => ({}));
+      
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error("AI usage limit reached. Please try again in a few seconds.");
+        } else if (res.status === 408) {
+          throw new Error("The AI request timed out. Please try again.");
+        } else if (res.status === 503) {
+          throw new Error("AI service is temporarily unavailable. Please try again later.");
+        }
+        throw new Error(data.message || "AI request failed");
+      }
+
       setOut(data.text);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "AI request failed");
+      if (e.name === "AbortError") {
+        toast.error("The AI request timed out. Please try again.");
+      } else {
+        toast.error(e instanceof Error ? e.message : "AI request failed");
+      }
     } finally {
       setBusy(false);
     }

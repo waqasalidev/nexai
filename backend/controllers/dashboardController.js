@@ -83,13 +83,18 @@ async function runTool(req, res) {
       const imageResult = await generateImage(prompt, options);
 
       // Store in AI usage history upon successful generation
-      const usage = await AIUsage.create({
-        user: req.user.id,
-        tool: "image",
-        title: title || prompt.slice(0, 50),
-        prompt: prompt,
-        output: imageResult.url,
-      });
+      let usage = null;
+      try {
+        usage = await AIUsage.create({
+          user: req.user.id,
+          tool: "image",
+          title: title || prompt.slice(0, 50),
+          prompt: prompt,
+          output: imageResult.url,
+        });
+      } catch (dbErr) {
+        console.error("Failed to persist image AIUsage log:", dbErr.message);
+      }
 
       return res.status(200).json({
         success: true,
@@ -103,19 +108,26 @@ async function runTool(req, res) {
     const textOutput = await generateText(prompt, system);
 
     // Store in AI usage history
-    const usage = await AIUsage.create({
-      user: req.user.id,
-      tool,
-      title: title || prompt.slice(0, 50),
-      prompt,
-      output: textOutput,
-    });
+    let usage = null;
+    try {
+      usage = await AIUsage.create({
+        user: req.user.id,
+        tool,
+        title: title || prompt.slice(0, 50),
+        prompt,
+        output: textOutput,
+      });
+    } catch (dbErr) {
+      console.error("Failed to persist text AIUsage log:", dbErr.message);
+    }
 
     return res.status(200).json({ success: true, text: textOutput, usage });
   } catch (error) {
     console.error(`AI Tool Error (${tool}):`, error);
-    return res.status(500).json({
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
       message: error.message || `Failed to execute AI tool ${tool}`,
+      code: error.code || "TOOL_EXECUTION_ERROR",
       error: error.message,
     });
   }

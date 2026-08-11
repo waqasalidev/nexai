@@ -144,45 +144,75 @@ async function generateImage(rawPrompt, options = {}) {
     }
   }
 
-  // 3. Fallback High-Quality AI Image Provider Engine (HuggingFace / AI Image Inference)
-  try {
-    const seed = Math.floor(Math.random() * 1000000);
-    const escapedPrompt = encodeURIComponent(prompt);
-    
-    // Call reliable backend-to-backend AI image model endpoint that returns binary image output
-    const providerUrl = `https://image.pollinations.ai/p/${escapedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
-    
-    const imageRes = await fetch(providerUrl, {
-      signal: AbortSignal.timeout(45000), // 45s timeout protection
-    });
+  // 3. Fallback High-Quality AI Image Provider Engine
+  let lastImageError = null;
+  const maxRetries = 2;
 
-    if (!imageRes.ok) {
-      throw new Error(`AI Image Provider returned status ${imageRes.status}`);
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    try {
+      const seed = Math.floor(Math.random() * 1000000);
+      const escapedPrompt = encodeURIComponent(prompt);
+      
+      const providerUrl = `https://image.pollinations.ai/p/${escapedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+      
+      const imageRes = await fetch(providerUrl, {
+        signal: AbortSignal.timeout(30000), // 30s timeout protection
+      });
+
+      if (imageRes.status === 429 && attempt <= maxRetries) {
+        console.warn(`[Image Generation] Provider rate limited (429). Retry attempt ${attempt}/${maxRetries} in 1.5s...`);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        continue;
+      }
+
+      if (!imageRes.ok) {
+        const err = new Error(`AI Image Provider returned status ${imageRes.status}`);
+        err.status = imageRes.status;
+        throw err;
+      }
+
+      const arrayBuffer = await imageRes.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      if (buffer.length < 100) {
+        throw new Error("Received invalid or corrupted image buffer from AI provider.");
+      }
+
+      // Persist to disk local server uploads storage
+      const relativeUrl = saveImageBuffer(buffer, "jpg");
+
+      return {
+        url: relativeUrl,
+        prompt: rawPrompt,
+        enhancedPrompt: prompt,
+        createdAt: new Date().toISOString(),
+      };
+    } catch (err) {
+      lastImageError = err;
+      if (err.status === 429 && attempt <= maxRetries) {
+        console.warn(`[Image Generation] Attempt ${attempt} hit rate limit. Retrying...`);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        continue;
+      }
     }
-
-    const arrayBuffer = await imageRes.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    if (buffer.length < 100) {
-      throw new Error("Received invalid or corrupted image buffer from AI provider.");
-    }
-
-    // Persist to disk local server uploads storage
-    const relativeUrl = saveImageBuffer(buffer, "jpg");
-
-    return {
-      url: relativeUrl,
-      prompt: rawPrompt,
-      enhancedPrompt: prompt,
-      createdAt: new Date().toISOString(),
-    };
-  } catch (err) {
-    console.error("AI Image Generation Error:", err.message);
-    if (err.name === "TimeoutError" || err.message.includes("timeout")) {
-      throw new Error("Image generation timed out. Please try again with a shorter prompt.");
-    }
-    throw new Error("Image generation service is temporarily unavailable. Please try again later.");
   }
+
+  console.error("AI Image Generation Error:", lastImageError ? lastImageError.message : "Unknown error");
+  if (lastImageError && (lastImageError.name === "TimeoutError" || lastImageError.message.includes("timeout"))) {
+    const err = new Error("Image generation timed out. Please try again.");
+    err.statusCode = 408;
+    throw err;
+  }
+  
+  if (lastImageError && (lastImageError.status === 429 || lastImageError.message.includes("429"))) {
+    const err = new Error("Image generation rate limit reached. Please try again in a few seconds.");
+    err.statusCode = 429;
+    throw err;
+  }
+
+  const err = new Error("Image generation service is temporarily unavailable. Please try again later.");
+  err.statusCode = 503;
+  throw err;
 }
 
 module.exports = {

@@ -3,9 +3,22 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
+// Available Gemini models for fallback chain in order of preference
+const MODEL_FALLBACK_CHAIN = [
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-1.5-flash",
+];
+
+/**
+ * Returns a generative model instance for a given model name
+ */
 function getModel(modelName = "gemini-2.5-flash") {
   if (!genAI) {
-    throw new Error("GEMINI_API_KEY is not configured on the server. Please add it to your .env file.");
+    const err = new Error("GEMINI_API_KEY is not configured on the server. Please add it to your .env file.");
+    err.statusCode = 401;
+    err.code = "MISSING_API_KEY";
+    throw err;
   }
   return genAI.getGenerativeModel({ model: modelName });
 }
@@ -21,23 +34,87 @@ function fileToGenerativePart(buffer, mimeType) {
 }
 
 /**
- * Generates text response using Gemini
+ * Helper to classify and format Gemini errors cleanly
+ */
+function classifyError(error) {
+  const msg = error.message || "";
+  const status = error.status;
+
+  if (status === 429 || msg.includes("429") || msg.includes("Quota exceeded") || msg.includes("Too Many Requests")) {
+    const err = new Error("AI usage limit reached. Please try again in a few seconds.");
+    err.statusCode = 429;
+    err.code = "RATE_LIMIT_EXCEEDED";
+    err.originalError = msg;
+    return err;
+  }
+
+  if (status === 401 || status === 403 || msg.includes("API_KEY_INVALID") || msg.includes("API key not valid")) {
+    const err = new Error("AI service configuration error. Please check server API keys.");
+    err.statusCode = 401;
+    err.code = "INVALID_OR_UNAUTHORIZED_API_KEY";
+    err.originalError = msg;
+    return err;
+  }
+
+  if (msg.includes("timeout") || msg.includes("ETIMEDOUT")) {
+    const err = new Error("The AI request timed out. Please try again.");
+    err.statusCode = 408;
+    err.code = "REQUEST_TIMEOUT";
+    err.originalError = msg;
+    return err;
+  }
+
+  const err = new Error("AI service is temporarily unavailable. Please try again later.");
+  err.statusCode = 503;
+  err.code = "PROVIDER_SERVER_ERROR";
+  err.originalError = msg;
+  return err;
+}
+
+/**
+ * Executes a Gemini API call across the model fallback chain
+ * Retries on 429/quota errors by switching models automatically
+ */
+async function executeWithModelFallback(apiCallFn) {
+  let lastError = null;
+
+  for (const modelName of MODEL_FALLBACK_CHAIN) {
+    try {
+      const model = getModel(modelName);
+      return await apiCallFn(model, modelName);
+    } catch (err) {
+      lastError = err;
+      const isRateLimit = err.status === 429 || 
+        (err.message && (err.message.includes("429") || err.message.includes("Quota exceeded")));
+
+      if (isRateLimit) {
+        console.warn(`[Gemini Service] Model ${modelName} hit 429 quota limit. Falling back to next model...`);
+        continue; // Immediately try next model in fallback chain
+      }
+
+      // If it's an auth error or non-retryable error, fail immediately
+      if (err.status === 401 || err.status === 403 || (err.message && err.message.includes("API key"))) {
+        throw classifyError(err);
+      }
+    }
+  }
+
+  // If all models in the fallback chain failed, throw classified error
+  throw classifyError(lastError || new Error("All AI models unavailable"));
+}
+
+/**
+ * Generates text response using Gemini with automatic model fallback
  */
 async function generateText(prompt, systemInstruction = "") {
-  try {
-    const model = getModel();
-    
+  return executeWithModelFallback(async (model) => {
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       systemInstruction: systemInstruction || undefined,
     });
-    
     const response = await result.response;
     return response.text();
-  } catch (error) {
-    console.error("Gemini API Error (generateText):", error);
-    throw new Error("AI service temporarily unavailable. Please try again later.");
-  }
+  });
 }
 
 /**
@@ -45,29 +122,32 @@ async function generateText(prompt, systemInstruction = "") {
  */
 async function streamChat(messages, systemInstruction, expressRes) {
   try {
-    const model = getModel();
-    
-    // Format messages for Gemini api
-    // Gemini expects: { role: 'user'|'model', parts: [{ text: '...' }] }
-    const contents = messages.map(m => ({
+    const contents = messages.map((m) => ({
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
 
-    const result = await model.generateContentStream({
-      contents,
-      systemInstruction: systemInstruction || undefined,
-    });
+    await executeWithModelFallback(async (model) => {
+      const result = await model.generateContentStream({
+        contents,
+        systemInstruction: systemInstruction || undefined,
+      });
 
-    for await (const chunk of result.stream) {
-      const text = chunk.text();
-      expressRes.write(text);
-    }
-    expressRes.end();
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        expressRes.write(text);
+      }
+      expressRes.end();
+    });
   } catch (error) {
     console.error("Gemini API Error (streamChat):", error);
-    expressRes.write("\n\n[Error: AI service temporarily unavailable. Please try again later.]");
-    expressRes.end();
+    const classified = classifyError(error);
+    if (!expressRes.headersSent) {
+      expressRes.status(classified.statusCode || 500).json({ message: classified.message, code: classified.code });
+    } else {
+      expressRes.write(`\n\n[Error: ${classified.message}]`);
+      expressRes.end();
+    }
   }
 }
 
@@ -75,10 +155,8 @@ async function streamChat(messages, systemInstruction, expressRes) {
  * Analyzes uploaded PDF to generate summary and key points
  */
 async function analyzePDF(fileBuffer, mimeType) {
-  try {
-    const model = getModel("gemini-2.5-flash");
+  return executeWithModelFallback(async (model) => {
     const filePart = fileToGenerativePart(fileBuffer, mimeType);
-
     const prompt = `Analyze this PDF document. Provide two structured sections:
 1. SUMMARY: A brief, comprehensive summary of the document.
 2. KEY_POINTS: A bulleted list of the most critical takeaways, findings, or sections.
@@ -88,7 +166,6 @@ Ensure your output is returned in clean markdown format, matching these two head
     const result = await model.generateContent([filePart, prompt]);
     const text = result.response.text();
 
-    // Split summary and key points
     let summary = "";
     let keyPoints = "";
 
@@ -104,33 +181,25 @@ Ensure your output is returned in clean markdown format, matching these two head
         summary = text.substring(summaryIndex).replace("SUMMARY", "").trim();
       }
     } else {
-      // If parsing fails, store whole text in summary
       summary = text;
       keyPoints = "Key points extraction could not be formatted automatically. Please read the summary.";
     }
 
-    // Strip leading headers/symbols like '#', '##', ':' from the parsed text
     summary = summary.replace(/^[:\-\s#*]+/g, "").trim();
     keyPoints = keyPoints.replace(/^[:\-\s#*]+/g, "").trim();
 
     return { summary, keyPoints };
-  } catch (error) {
-    console.error("Gemini API Error (analyzePDF):", error);
-    throw new Error("AI service temporarily unavailable. Please try again later.");
-  }
+  });
 }
 
 /**
  * Answers questions about an uploaded PDF
  */
 async function askDocumentQuestion(fileBuffer, mimeType, question, history = []) {
-  try {
-    const model = getModel("gemini-2.5-flash");
+  return executeWithModelFallback(async (model) => {
     const filePart = fileToGenerativePart(fileBuffer, mimeType);
-
-    // Build prompts with optional context/history
     const historyText = history
-      .map(h => `Q: ${h.question}\nA: ${h.answer}`)
+      .map((h) => `Q: ${h.question}\nA: ${h.answer}`)
       .join("\n\n");
 
     const prompt = `You are an AI analyzing the attached PDF file.
@@ -144,19 +213,14 @@ Provide a direct, accurate answer using context from the document. Use markdown 
 
     const result = await model.generateContent([filePart, prompt]);
     return result.response.text();
-  } catch (error) {
-    console.error("Gemini API Error (askDocumentQuestion):", error);
-    throw new Error("AI service temporarily unavailable. Please try again later.");
-  }
+  });
 }
 
 /**
  * Generates a structured slide presentation (JSON Mode)
  */
 async function generatePresentationSlides(topic, slideCount = 5) {
-  try {
-    const model = getModel("gemini-2.5-flash");
-    
+  return executeWithModelFallback(async (model) => {
     const prompt = `Create a professional presentation slide deck on the topic: "${topic}".
 Generate exactly ${slideCount} slides.
 For each slide, you MUST provide:
@@ -189,19 +253,14 @@ You MUST respond in JSON format matching the schema:
       console.error("JSON parsing error on slides generation:", responseText);
       throw new Error("Failed to parse presentation JSON schema from AI model.");
     }
-  } catch (error) {
-    console.error("Gemini API Error (generatePresentationSlides):", error);
-    throw new Error("AI service temporarily unavailable. Please try again later.");
-  }
+  });
 }
 
 /**
  * Generates structured CV/Resume details (JSON Mode)
  */
 async function generateResumeDetails(promptInput) {
-  try {
-    const model = getModel("gemini-2.5-flash");
-
+  return executeWithModelFallback(async (model) => {
     const prompt = `Generate an ATS-friendly, professional CV/Resume based on the request: "${promptInput}".
 You must output a JSON object containing:
 1. "summary": A concise professional summary (1-2 sentences).
@@ -244,10 +303,7 @@ Format your response strictly as JSON matching:
       console.error("JSON parsing error on resume generation:", responseText);
       throw new Error("Failed to parse resume JSON schema from AI model.");
     }
-  } catch (error) {
-    console.error("Gemini API Error (generateResumeDetails):", error);
-    throw new Error("AI service temporarily unavailable. Please try again later.");
-  }
+  });
 }
 
 module.exports = {
@@ -257,4 +313,5 @@ module.exports = {
   askDocumentQuestion,
   generatePresentationSlides,
   generateResumeDetails,
+  classifyError,
 };

@@ -62,8 +62,17 @@ function ImagePage() {
           title: prompt.trim().slice(0, 50),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to generate image");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error("AI usage limit reached. Please try again in a few seconds.");
+        } else if (res.status === 408) {
+          throw new Error("Image request timed out. Please try again.");
+        } else if (res.status === 503) {
+          throw new Error("Image service is temporarily unavailable. Please try again later.");
+        }
+        throw new Error(data.message || "Failed to generate image");
+      }
 
       const finalUrl = data.image?.url || data.text;
       if (!finalUrl) throw new Error("No image URL received from server");
@@ -72,7 +81,11 @@ function ImagePage() {
       toast.success("Image generated successfully!");
       await loadHistory();
     } catch (e) {
-      toast.error(e.message || "Image generation failed");
+      if (e.name === "AbortError") {
+        toast.error("Image generation timed out. Please try again.");
+      } else {
+        toast.error(e.message || "Image generation failed");
+      }
     } finally {
       setBusy(false);
     }

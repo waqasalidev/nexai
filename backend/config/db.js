@@ -8,6 +8,23 @@ try {
   console.warn("Custom DNS server setup skipped:", dnsErr.message);
 }
 
+// Safe Mongoose Connection Event Monitoring
+mongoose.connection.on("connected", () => {
+  console.log(">>> Mongoose Event: Connected to Database");
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error(">>> Mongoose Event Error:", err.message);
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.warn(">>> Mongoose Event: Disconnected from Database");
+});
+
+mongoose.connection.on("reconnected", () => {
+  console.log(">>> Mongoose Event: Reconnected to Database");
+});
+
 async function connectDB() {
   let uri = process.env.MONGO_URI || process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/nexai";
   
@@ -20,7 +37,6 @@ async function connectDB() {
     await mongoose.connect(uri, {
       serverSelectionTimeoutMS: 5000,
     });
-    console.log(">>> MongoDB Connected Successfully");
   } catch (primaryError) {
     console.warn(`>>> Primary MongoDB connection failed (${primaryError.message}). Attempting fallback to local MongoDB...`);
     try {
@@ -28,7 +44,6 @@ async function connectDB() {
       await mongoose.connect(fallbackUri, {
         serverSelectionTimeoutMS: 5000,
       });
-      console.log(">>> MongoDB Connected Successfully via local fallback URI");
     } catch (fallbackError) {
       console.error("MongoDB Connection Failed (both primary and fallback):", primaryError.message);
       throw primaryError;
@@ -41,6 +56,7 @@ function isDBConnected() {
 }
 
 module.exports = { connectDB, isDBConnected };
+
 
 
 

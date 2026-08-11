@@ -1,7 +1,7 @@
 const Chat = require("../models/Chat");
 const ChatHistory = require("../models/ChatHistory");
 const AIUsage = require("../models/AIUsage");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { streamChat } = require("../services/gemini");
 
 // @desc    Get all chats for user
 // @route   GET /api/chats
@@ -78,58 +78,37 @@ async function sendChatMessage(req, res) {
       parts: [{ text: m.content }],
     }));
 
-    // Initialize Gemini
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ message: "GEMINI_API_KEY is not configured on the server." });
-    }
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
+    // 3. Stream text from Gemini API using model fallback service
+    const systemInstruction = "You are NexAI, a premium, knowledgeable, helpful AI assistant. Use markdown for formatting and code blocks for code.";
+    
     // Set headers for streaming text
     res.setHeader("Content-Type", "text/plain");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
-    // 3. Stream text from Gemini API
-    const result = await model.generateContentStream({
-      contents,
-      systemInstruction: "You are NexAI, a premium, knowledgeable, helpful AI assistant. Use markdown for formatting and code blocks for code.",
-    });
+    await streamChat(pastMessages, systemInstruction, res);
 
-    let assistantResponse = "";
-    for await (const chunk of result.stream) {
-      const text = chunk.text();
-      assistantResponse += text;
-      res.write(text);
-    }
-    res.end();
-
-    // 4. Save Assistant Response in Database
-    await ChatHistory.create({
-      chat: chatId,
-      role: "assistant",
-      content: assistantResponse,
-    });
-
-    // 5. Update Chat updatedAt timestamp
+    // 4. Update Chat updatedAt timestamp
     chat.updatedAt = new Date();
     await chat.save();
 
-    // 6. Log usage
-    await AIUsage.create({
-      user: req.user.id,
-      tool: "chat",
-      title: chat.title,
-      prompt: message,
-      output: assistantResponse,
-    });
-
+    // 5. Log usage safely
+    try {
+      await AIUsage.create({
+        user: req.user.id,
+        tool: "chat",
+        title: chat.title,
+        prompt: message,
+        output: "Streaming conversation updated",
+      });
+    } catch (dbErr) {
+      console.error("Failed to log chat AIUsage:", dbErr.message);
+    }
   } catch (error) {
     console.error("Chat error:", error);
-    // If stream started but failed, close response
     if (!res.headersSent) {
-      res.status(500).json({ message: "Failed to process chat message", error: error.message });
+      const statusCode = error.statusCode || 500;
+      res.status(statusCode).json({ message: error.message || "Failed to process chat message", error: error.message });
     } else {
       res.end();
     }

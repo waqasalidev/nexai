@@ -11,10 +11,24 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 /**
- * Drop-in replacement for fetch() that automatically prepends the backend base URL.
+ * Drop-in replacement for fetch() that automatically prepends the backend base URL
+ * and includes a default 35-second AbortSignal timeout protection.
  * Usage: apiFetch("/api/auth/login", { method: "POST", ... })
  */
 export function apiFetch(path, options = {}) {
   const url = `${BASE_URL}${path}`;
-  return fetch(url, options);
+  const timeoutMs = options.timeout || 35000;
+  
+  const controller = new AbortController();
+  const signal = options.signal || controller.signal;
+  
+  let timer = null;
+  if (!options.signal) {
+    timer = setTimeout(() => controller.abort(), timeoutMs);
+  }
+
+  return fetch(url, { ...options, signal }).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
 }
+
