@@ -14,6 +14,8 @@ dist-ssr
 .vinxi
 .tanstack/**
 .tanstack-cache/**
+.nexai/**
+.nexai-cache/**
 .nitro
 *.local
 
