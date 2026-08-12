@@ -20,6 +20,7 @@ const subscriptionsRouter = require("./routes/subscriptions");
 const historyRouter = require("./routes/history");
 const adminRouter = require("./routes/admin");
 const aiRouter = require("./routes/ai");
+const healthRouter = require("./routes/health");
 
 const app = express();
 
@@ -47,25 +48,8 @@ if (!fs.existsSync(imagesDir)) {
 }
 app.use("/uploads", express.static(uploadsDir));
 
-// Production System Health Endpoint
-app.get("/api/health", (req, res) => {
-  const { isDBConnected } = require("./config/db");
-  const dbStatus = isDBConnected();
-  const geminiConfigured = !!process.env.GEMINI_API_KEY;
-  const status = dbStatus ? "ok" : "degraded";
-
-  return res.status(dbStatus ? 200 : 503).json({
-    status,
-    backend: "running",
-    database: dbStatus ? "connected" : "disconnected",
-    dbConnected: dbStatus,
-    services: {
-      gemini: geminiConfigured ? "configured" : "missing_key",
-    },
-  });
-});
-
 // API Routes Mounting
+app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/chats", chatsRouter);
