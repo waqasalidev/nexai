@@ -22,7 +22,7 @@ export function CopyButton({ text }) {
         toast.success("Copied to clipboard");
         setTimeout(() => setCopied(false), 1500);
       }}
-      className="inline-flex items-center gap-1.5 rounded-lg glass px-3 py-1.5 text-xs hover:bg-white/[0.08]"
+      className="inline-flex items-center gap-1.5 rounded-xl glass px-3 py-2 text-xs font-medium hover:bg-white/[0.08] transition cursor-pointer min-h-[36px]"
     >
       <Copy className="h-3 w-3" /> {copied ? "Copied" : "Copy"}
     </button>

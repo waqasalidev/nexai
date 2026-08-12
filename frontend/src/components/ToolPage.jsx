@@ -93,14 +93,14 @@ export function ToolPage({
           <button
             onClick={go}
             disabled={busy || !input.trim()}
-            className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-semibold text-primary-foreground glow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-semibold text-primary-foreground glow-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed min-h-[44px] hover:scale-[1.01] transition"
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}{" "}
             {busy ? "Generating…" : "Generate"}
           </button>
         </div>
 
-        <motion.div layout className="glass rounded-2xl p-5 min-h-[300px]">
+        <motion.div layout className="glass rounded-2xl p-5 min-h-[300px] overflow-hidden">
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm font-medium">Result</div>
             {out && <CopyButton text={out} />}
@@ -113,7 +113,9 @@ export function ToolPage({
             </div>
           )}
           {out ? (
-            <Markdown content={out} />
+            <div className="break-words overflow-x-auto max-w-full">
+              <Markdown content={out} />
+            </div>
           ) : (
             !busy && (
               <div className="text-sm text-muted-foreground">

@@ -9,13 +9,13 @@ function CodePage() {
   const [lang, setLang] = useState("JavaScript");
 
   const extraFields = (
-    <div className="grid grid-cols-2 gap-4 mt-2 mb-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 mb-4">
       <div>
         <label className="text-xs font-semibold text-muted-foreground block mb-1.5">Action</label>
         <select
           value={action}
           onChange={(e) => setAction(e.target.value)}
-          className="w-full rounded-xl bg-input border border-border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40 text-foreground"
+          className="w-full rounded-xl bg-input border border-border px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40 text-foreground cursor-pointer min-h-[44px]"
         >
           <option value="Generate">Generate Code</option>
           <option value="Explain">Explain Code</option>
@@ -28,7 +28,7 @@ function CodePage() {
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value)}
-          className="w-full rounded-xl bg-input border border-border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40 text-foreground"
+          className="w-full rounded-xl bg-input border border-border px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40 text-foreground cursor-pointer min-h-[44px]"
         >
           <option value="JavaScript">JavaScript</option>
           <option value="Python">Python</option>

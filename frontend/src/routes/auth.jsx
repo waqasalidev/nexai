@@ -52,7 +52,7 @@ function AuthPage() {
       <div className="absolute inset-0 grid-bg opacity-30" />
       <Link
         to="/"
-        className="absolute top-6 left-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="absolute top-6 left-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer min-h-[44px] px-2"
       >
         <ArrowLeft className="h-4 w-4" /> Back
       </Link>
@@ -60,7 +60,7 @@ function AuthPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative glass-strong w-full max-w-md rounded-3xl p-8 neon-border"
+        className="relative glass-strong w-full max-w-md rounded-3xl p-6 sm:p-8 neon-border"
       >
         <div className="flex items-center gap-2 mb-6">
           <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-accent grid place-items-center glow-sm">
@@ -80,16 +80,14 @@ function AuthPage() {
             : "Start building with AI in seconds."}
         </p>
 
-
-
-        <form onSubmit={handleEmail} className="space-y-3">
+        <form onSubmit={handleEmail} className="space-y-3 mt-6">
           {mode === "signup" && (
             <input
               type="text"
               placeholder="Your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl bg-input border border-border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+              className="w-full rounded-xl bg-input border border-border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/40 min-h-[44px]"
             />
           )}
           <input
@@ -98,7 +96,7 @@ function AuthPage() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl bg-input border border-border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+            className="w-full rounded-xl bg-input border border-border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/40 min-h-[44px]"
           />
 
           <input
@@ -108,21 +106,21 @@ function AuthPage() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl bg-input border border-border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+            className="w-full rounded-xl bg-input border border-border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/40 min-h-[44px]"
           />
 
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 transition glow-sm disabled:opacity-50"
+            className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3.5 text-sm font-semibold text-primary-foreground hover:opacity-90 transition glow-sm disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center min-h-[44px]"
           >
-            {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === "signin" ? "Sign in" : "Create account"}
           </button>
         </form>
 
         <button
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="mt-5 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+          className="mt-5 w-full text-center text-sm text-muted-foreground hover:text-foreground cursor-pointer min-h-[44px] flex items-center justify-center"
         >
           {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
         </button>

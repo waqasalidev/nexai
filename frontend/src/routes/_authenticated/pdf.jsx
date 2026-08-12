@@ -172,7 +172,7 @@ function PdfPage() {
         <div className="space-y-4">
           <button
             onClick={() => selectDoc(null)}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition mb-2"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition mb-2 cursor-pointer min-h-[44px] px-2"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Uploads
           </button>
@@ -195,7 +195,8 @@ function PdfPage() {
                   </div>
                   <button
                     onClick={(e) => deleteDoc(activeDoc._id, e)}
-                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition"
+                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    title="Delete Document"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -206,7 +207,7 @@ function PdfPage() {
                     <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
                       <Sparkles className="h-4 w-4 text-primary" /> Summary
                     </h3>
-                    <div className="text-sm leading-relaxed text-muted-foreground glass p-4 rounded-xl">
+                    <div className="text-sm leading-relaxed text-muted-foreground glass p-4 rounded-xl break-words overflow-x-auto">
                       <Markdown content={activeDoc.summary || "Generating summary..."} />
                     </div>
                   </div>
@@ -215,7 +216,7 @@ function PdfPage() {
                     <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
                       <Sparkles className="h-4 w-4 text-accent" /> Key Points
                     </h3>
-                    <div className="text-sm leading-relaxed text-muted-foreground glass p-4 rounded-xl">
+                    <div className="text-sm leading-relaxed text-muted-foreground glass p-4 rounded-xl break-words overflow-x-auto">
                       <Markdown content={activeDoc.keyPoints || "Extracting key points..."} />
                     </div>
                   </div>
@@ -224,7 +225,7 @@ function PdfPage() {
             </div>
 
             {/* Right side: Chat with Document */}
-            <div className="lg:col-span-2 glass rounded-2xl p-5 flex flex-col h-[650px]">
+            <div className="lg:col-span-2 glass rounded-2xl p-5 flex flex-col h-[500px] sm:h-[650px]">
               <div className="border-b border-border/50 pb-3 mb-4 flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-accent" />
                 <span className="text-sm font-semibold">Chat with Document</span>
@@ -241,12 +242,12 @@ function PdfPage() {
                 {chat.map((item, idx) => (
                   <div key={idx} className="space-y-3">
                     <div className="flex justify-end">
-                      <div className="max-w-[85%] rounded-2xl bg-gradient-to-br from-primary to-accent text-primary-foreground px-4 py-2.5 text-sm">
+                      <div className="max-w-[85%] rounded-2xl bg-gradient-to-br from-primary to-accent text-primary-foreground px-4 py-2.5 text-sm break-words">
                         {item.question}
                       </div>
                     </div>
                     <div className="flex justify-start">
-                      <div className="max-w-[90%] space-y-1">
+                      <div className="max-w-[90%] space-y-1 break-words overflow-x-auto">
                         {item.answer ? (
                           <Markdown content={item.answer} />
                         ) : (
@@ -267,12 +268,12 @@ function PdfPage() {
                   onChange={(e) => setQuestion(e.target.value)}
                   placeholder="Ask a question about this file..."
                   disabled={asking}
-                  className="flex-1 rounded-xl bg-input border border-border px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                  className="flex-1 rounded-xl bg-input border border-border px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/40 min-h-[44px]"
                 />
                 <button
                   type="submit"
                   disabled={asking || !question.trim()}
-                  className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center disabled:opacity-40 hover:scale-105 transition shrink-0"
+                  className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center disabled:opacity-40 hover:scale-105 transition shrink-0 cursor-pointer disabled:cursor-not-allowed min-h-[44px] min-w-[44px]"
                 >
                   <Send className="h-4 w-4 text-primary-foreground" />
                 </button>

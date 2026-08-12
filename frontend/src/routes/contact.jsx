@@ -102,7 +102,7 @@ function ContactPage() {
         >
           <h2 className="font-display text-xl font-bold">Transmit Message</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs text-muted-foreground font-medium">Name</label>
                 <input
@@ -111,7 +111,7 @@ function ContactPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your Name"
-                  className="w-full rounded-xl bg-input border border-border px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-primary/40 text-foreground"
+                  className="w-full rounded-xl bg-input border border-border px-3.5 py-3 text-xs outline-none focus:ring-2 focus:ring-primary/40 text-foreground min-h-[44px]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -122,7 +122,7 @@ function ContactPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@domain.com"
-                  className="w-full rounded-xl bg-input border border-border px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-primary/40 text-foreground"
+                  className="w-full rounded-xl bg-input border border-border px-3.5 py-3 text-xs outline-none focus:ring-2 focus:ring-primary/40 text-foreground min-h-[44px]"
                 />
               </div>
             </div>
@@ -135,7 +135,7 @@ function ContactPage() {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Topic of Inquiry"
-                className="w-full rounded-xl bg-input border border-border px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-primary/40 text-foreground"
+                className="w-full rounded-xl bg-input border border-border px-3.5 py-3 text-xs outline-none focus:ring-2 focus:ring-primary/40 text-foreground min-h-[44px]"
               />
             </div>
 
@@ -147,14 +147,14 @@ function ContactPage() {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Transmit your message details here..."
                 rows={5}
-                className="w-full rounded-xl bg-input border border-border px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-primary/40 text-foreground resize-none"
+                className="w-full rounded-xl bg-input border border-border px-3.5 py-3 text-xs outline-none focus:ring-2 focus:ring-primary/40 text-foreground resize-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-xs font-semibold text-primary-foreground flex items-center justify-center gap-2 hover:scale-[1.01] transition shadow-lg disabled:opacity-50"
+              className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3.5 text-xs font-semibold text-primary-foreground flex items-center justify-center gap-2 hover:scale-[1.01] transition shadow-lg disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
             >
               {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
               {busy ? "Transmitting..." : "Send Signals"}

@@ -134,7 +134,7 @@ function ImagePage() {
             <button
               onClick={generate}
               disabled={busy || !prompt.trim()}
-              className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-semibold text-primary-foreground glow-sm disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.01] transition"
+              className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-semibold text-primary-foreground glow-sm disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.01] transition cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
               {busy ? "Creating quantum pixels..." : "Generate Artwork"}
@@ -160,14 +160,14 @@ function ImagePage() {
                     href={currentResolvedUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1.5 rounded-lg border border-border hover:bg-white/[0.05] transition text-muted-foreground hover:text-foreground"
+                    className="p-2 rounded-xl border border-border hover:bg-white/[0.05] transition text-muted-foreground hover:text-foreground cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
                     title="View Fullscreen"
                   >
                     <Eye className="h-4 w-4" />
                   </a>
                   <button
                     onClick={() => handleDownload(imageUrl)}
-                    className="p-1.5 rounded-lg border border-border hover:bg-white/[0.05] transition text-muted-foreground hover:text-foreground"
+                    className="p-2 rounded-xl border border-border hover:bg-white/[0.05] transition text-muted-foreground hover:text-foreground cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
                     title="Download Image"
                   >
                     <Download className="h-4 w-4" />
@@ -183,7 +183,7 @@ function ImagePage() {
                   animate={{ opacity: 1, scale: 1 }}
                   src={currentResolvedUrl}
                   alt="AI Generated Artwork"
-                  className="max-h-[320px] rounded-xl object-contain border border-border/50 shadow-2xl"
+                  className="max-h-[320px] max-w-full rounded-xl object-contain border border-border/50 shadow-2xl"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}
@@ -207,7 +207,7 @@ function ImagePage() {
                 Your generated image history will appear here.
               </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {history.map((item) => {
                   const itemUrl = resolveImageUrl(item.output);
                   return (
@@ -226,8 +226,8 @@ function ImagePage() {
                           e.currentTarget.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23666'><rect width='100%' height='100%' fill='%23111'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23888' font-size='12'>Image</text></svg>";
                         }}
                       />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center">
-                        <span className="text-white text-xs font-medium px-2 text-center line-clamp-2">
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center p-2">
+                        <span className="text-white text-xs font-medium text-center line-clamp-2">
                           {item.title}
                         </span>
                       </div>

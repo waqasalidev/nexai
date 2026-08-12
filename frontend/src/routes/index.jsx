@@ -142,14 +142,14 @@ function Landing() {
             >
               <Link
                 to="/auth"
-                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-6 py-3.5 text-sm font-semibold text-primary-foreground glow transition hover:scale-[1.02]"
+                className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-6 py-3.5 text-sm font-semibold text-primary-foreground glow transition hover:scale-[1.02] cursor-pointer min-h-[44px]"
               >
                 Start Using AI{" "}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <a
                 href="#tools"
-                className="inline-flex items-center gap-2 rounded-xl glass px-6 py-3.5 text-sm font-semibold hover:bg-white/[0.08] transition"
+                className="inline-flex items-center justify-center gap-2 rounded-xl glass px-6 py-3.5 text-sm font-semibold hover:bg-white/[0.08] transition cursor-pointer min-h-[44px]"
               >
                 Explore Features
               </a>
@@ -159,16 +159,16 @@ function Landing() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="mt-12 flex items-center gap-6 text-xs text-muted-foreground"
+              className="mt-12 flex flex-wrap items-center gap-6 text-xs text-muted-foreground"
             >
               <div>
                 <span className="text-foreground font-semibold text-base">12+</span> AI tools
               </div>
-              <div className="h-4 w-px bg-border" />
+              <div className="h-4 w-px bg-border hidden sm:block" />
               <div>
                 <span className="text-foreground font-semibold text-base">∞</span> possibilities
               </div>
-              <div className="h-4 w-px bg-border" />
+              <div className="h-4 w-px bg-border hidden sm:block" />
               <div>
                 <span className="text-foreground font-semibold text-base">0ms</span> setup
               </div>
@@ -180,9 +180,9 @@ function Landing() {
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="relative py-24 px-6">
+      <section id="features" className="relative py-16 sm:py-24 px-4 sm:px-6">
         <div className="mx-auto max-w-7xl">
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {FEATURES.map((f, i) => (
               <motion.div
                 key={f.title}
@@ -204,7 +204,7 @@ function Landing() {
       </section>
 
       {/* TOOLS */}
-      <section id="tools" className="relative py-24 px-6">
+      <section id="tools" className="relative py-16 sm:py-24 px-4 sm:px-6">
         <div className="mx-auto max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -212,18 +212,18 @@ function Landing() {
             viewport={{ once: true }}
             className="text-center max-w-2xl mx-auto mb-14"
           >
-            <h2 className="font-display text-4xl sm:text-5xl font-bold">
+            <h2 className="font-display text-3xl sm:text-5xl font-bold">
               One platform.
               <br />
               <span className="gradient-text">Every AI tool.</span>
             </h2>
-            <p className="mt-4 text-muted-foreground">
+            <p className="mt-4 text-muted-foreground text-sm sm:text-base">
               Stop juggling tabs. NexAI brings every essential AI workflow under one premium
               interface.
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {TOOLS.map((t, i) => (
               <motion.div
                 key={t.title}
@@ -234,7 +234,7 @@ function Landing() {
               >
                 <Link
                   to="/auth"
-                  className="group block h-full glass rounded-2xl p-6 hover:bg-white/[0.07] transition hover:-translate-y-1"
+                  className="group block h-full glass rounded-2xl p-6 hover:bg-white/[0.07] transition hover:-translate-y-1 cursor-pointer border border-border/40"
                 >
                   <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-accent grid place-items-center mb-4 glow-sm">
                     <t.icon className="h-5 w-5 text-primary-foreground" />
@@ -249,17 +249,17 @@ function Landing() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="relative py-24 px-6">
+      <section id="pricing" className="relative py-16 sm:py-24 px-4 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-14">
-            <h2 className="font-display text-4xl sm:text-5xl font-bold">
+            <h2 className="font-display text-3xl sm:text-5xl font-bold">
               Simple, <span className="gradient-text">scalable pricing</span>
             </h2>
-            <p className="mt-4 text-muted-foreground">
+            <p className="mt-4 text-muted-foreground text-sm sm:text-base">
               Start free. Upgrade when you're ready to ship.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
                 name: "Free",
@@ -311,7 +311,7 @@ function Landing() {
                 </ul>
                 <Link
                   to="/auth"
-                  className={`mt-7 block text-center rounded-xl px-4 py-3 text-sm font-semibold transition ${p.featured ? "bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90" : "glass hover:bg-white/[0.08]"}`}
+                  className={`mt-7 block text-center rounded-xl px-4 py-3.5 text-sm font-semibold transition cursor-pointer min-h-[44px] flex items-center justify-center ${p.featured ? "bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90" : "glass hover:bg-white/[0.08]"}`}
                 >
                   Get started
                 </Link>

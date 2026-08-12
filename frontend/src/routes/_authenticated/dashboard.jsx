@@ -76,10 +76,10 @@ function Dashboard() {
     <AppShell title={`Welcome back, ${name}`}>
       <div className="space-y-6">
         {/* Navigation Tabs */}
-        <div className="flex gap-2 border-b border-border/50 pb-2 print:hidden">
+        <div className="flex gap-2 border-b border-border/50 pb-2 print:hidden overflow-x-auto">
           <button
             onClick={() => setActiveTab("tools")}
-            className={`rounded-xl px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+            className={`rounded-xl px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition cursor-pointer min-h-[44px] flex items-center ${
               activeTab === "tools"
                 ? "bg-primary/20 text-foreground border border-primary/30"
                 : "text-muted-foreground hover:text-foreground"
@@ -89,7 +89,7 @@ function Dashboard() {
           </button>
           <button
             onClick={() => setActiveTab("library")}
-            className={`rounded-xl px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+            className={`rounded-xl px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition cursor-pointer min-h-[44px] flex items-center ${
               activeTab === "library"
                 ? "bg-primary/20 text-foreground border border-primary/30"
                 : "text-muted-foreground hover:text-foreground"
@@ -101,10 +101,10 @@ function Dashboard() {
 
         {activeTab === "tools" ? (
           <div>
-            <p className="text-muted-foreground -mt-2 mb-8">
+            <p className="text-muted-foreground -mt-2 mb-8 text-sm">
               Pick a tool to get started. Your generations are saved automatically.
             </p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {TOOLS.map((t, i) => (
                 <motion.div
                   key={t.to}
@@ -114,7 +114,7 @@ function Dashboard() {
                 >
                   <Link
                     to={t.to}
-                    className="group block glass rounded-2xl p-6 hover:bg-white/[0.07] transition hover:-translate-y-0.5"
+                    className="group block glass rounded-2xl p-6 hover:bg-white/[0.07] transition hover:-translate-y-0.5 cursor-pointer border border-border/40"
                   >
                     <div className="flex items-start justify-between">
                       <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary to-accent grid place-items-center glow-sm">
@@ -122,7 +122,7 @@ function Dashboard() {
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-foreground" />
                     </div>
-                    <h3 className="mt-4 font-display font-semibold">{t.title}</h3>
+                    <h3 className="mt-4 font-display font-semibold text-base">{t.title}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">{t.desc}</p>
                   </Link>
                 </motion.div>

@@ -117,6 +117,15 @@
 
   ::selection { background: oklch(0.72 0.21 295 / 0.4); color: var(--foreground); }
 
+  /* Button & Interactive Element Cursors */
+  button, [role="button"], input[type="submit"], input[type="button"] {
+    cursor: pointer;
+  }
+  button:disabled, [role="button"][aria-disabled="true"], input[type="submit"]:disabled, input[type="button"]:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6;
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }

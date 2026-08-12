@@ -188,7 +188,7 @@ function ResumePage() {
               <span className="text-sm font-semibold">Resumes</span>
               <button
                 onClick={() => selectResume(null)}
-                className="text-xs font-semibold text-accent hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-accent hover:underline flex items-center gap-1 cursor-pointer min-h-[36px] px-2"
               >
                 <Plus className="h-3.5 w-3.5" /> Create New
               </button>
@@ -204,15 +204,16 @@ function ResumePage() {
                       key={r._id}
                       onClick={() => selectResume(r)}
                       className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition ${
-                        active ? "bg-primary/20 text-foreground border border-primary/30" : "bg-white/[0.02] hover:bg-white/[0.04] text-muted-foreground"
+                        active ? "bg-primary/20 text-foreground border border-primary/30 font-medium" : "bg-white/[0.02] hover:bg-white/[0.04] text-muted-foreground"
                       }`}
                     >
                       <span className="truncate pr-2">{r.title}</span>
                       <button
                         onClick={(e) => deleteResume(r._id, e)}
-                        className="hover:text-destructive p-0.5 rounded transition"
+                        className="hover:text-destructive p-1.5 rounded transition cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center"
+                        title="Delete Resume"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   );
@@ -236,7 +237,7 @@ function ResumePage() {
             <button
               onClick={generateResume}
               disabled={generating || !prompt.trim()}
-              className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-xs font-semibold text-primary-foreground flex items-center justify-center gap-2 hover:scale-[1.01] transition"
+              className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-xs font-semibold text-primary-foreground flex items-center justify-center gap-2 hover:scale-[1.01] transition cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
             >
               {generating && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {generating ? "Generating..." : "Generate Resume Data"}
@@ -256,14 +257,14 @@ function ResumePage() {
               <button
                 onClick={saveResume}
                 disabled={saving}
-                className="flex-1 rounded-xl bg-primary px-3 py-2.5 text-xs font-semibold text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90"
+                className="flex-1 rounded-xl bg-primary px-3 py-3 text-xs font-semibold text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 cursor-pointer disabled:cursor-not-allowed min-h-[44px]"
               >
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 Save Resume
               </button>
               <button
                 onClick={handlePrint}
-                className="p-2.5 rounded-xl border border-border hover:bg-white/[0.05] text-muted-foreground hover:text-foreground transition"
+                className="p-3 rounded-xl border border-border hover:bg-white/[0.05] text-muted-foreground hover:text-foreground transition cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="Print / Export as PDF"
               >
                 <Printer className="h-4 w-4" />
