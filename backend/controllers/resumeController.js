@@ -18,21 +18,39 @@ async function listResumes(req, res) {
 // @route   POST /api/resumes/generate
 // @access  Private
 async function generateResume(req, res) {
+  const startTime = Date.now();
   const { prompt } = req.body;
   try {
-    if (!prompt) {
-      return res.status(400).json({ message: "Please provide a resume generation description" });
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a resume generation description",
+        error: { code: "INVALID_PROMPT", message: "Please provide a valid resume prompt", status: 400 },
+      });
     }
 
     // Call Gemini JSON generator
     const resumeDetails = await generateResumeDetails(prompt);
 
-    // Save to DB
-    const resume = await Resume.create({
-      user: req.user.id,
-      title: `Resume - ${prompt.slice(0, 30)}`,
-      content: resumeDetails,
-    });
+    // Save to DB safely
+    let resume = null;
+    try {
+      resume = await Resume.create({
+        user: req.user.id,
+        title: `Resume - ${prompt.slice(0, 30)}`,
+        content: resumeDetails,
+      });
+    } catch (dbErr) {
+      console.error("Failed to persist Resume document to MongoDB:", dbErr.message);
+      // Fallback resume object if DB save fails
+      resume = {
+        _id: `temp_${Date.now()}`,
+        user: req.user.id,
+        title: `Resume - ${prompt.slice(0, 30)}`,
+        content: resumeDetails,
+        createdAt: new Date(),
+      };
+    }
 
     // Log AI Usage
     try {
@@ -47,11 +65,29 @@ async function generateResume(req, res) {
       console.error("Failed to log resume AIUsage:", dbErr.message);
     }
 
-    res.status(201).json({ resume });
+    return res.status(201).json({ success: true, resume });
   } catch (error) {
-    console.error("Resume generation error:", error);
+    const duration = Date.now() - startTime;
     const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: error.message || "Failed to generate resume", error: error.message });
+    const errorCode = error.code || "RESUME_GENERATION_FAILED";
+    const errorMessage = error.message || "Failed to generate resume";
+
+    console.error(`\n--- RESUME GENERATION ERROR REPORT ---`);
+    console.error(`ENDPOINT: POST /api/resumes/generate`);
+    console.error(`HTTP STATUS: ${statusCode}`);
+    console.error(`ERROR CODE: ${errorCode}`);
+    console.error(`ERROR MESSAGE: ${errorMessage}`);
+    console.error(`EXECUTION DURATION: ${duration}ms\n`);
+
+    return res.status(statusCode).json({
+      success: false,
+      message: errorMessage,
+      error: {
+        code: errorCode,
+        message: errorMessage,
+        status: statusCode,
+      },
+    });
   }
 }
 

@@ -69,18 +69,6 @@ async function runTool(req, res) {
   const startTime = Date.now();
   const { prompt, system, tool, title, options } = req.body;
   try {
-    if (!isDBConnected()) {
-      return res.status(503).json({
-        success: false,
-        message: "Database service is temporarily unavailable. Please try again later.",
-        error: {
-          code: "DATABASE_UNAVAILABLE",
-          message: "Database service is temporarily unavailable.",
-          status: 503,
-        },
-      });
-    }
-
     if (!prompt || !tool) {
       return res.status(400).json({
         success: false,

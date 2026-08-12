@@ -63,29 +63,62 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to the NexAI Full-Stack SaaS API Portal" });
 });
 
-app.get("/api/ai/diagnostic", async (req, res) => {
+// Production System Health Endpoint
+app.get("/api/health", (req, res) => {
+  const { isDBConnected } = require("./config/db");
+  const dbStatus = isDBConnected();
+  const geminiConfigured = !!process.env.GEMINI_API_KEY;
+  const status = dbStatus ? "ok" : "degraded";
+
+  return res.status(dbStatus ? 200 : 503).json({
+    status,
+    backend: "running",
+    database: dbStatus ? "connected" : "disconnected",
+    dbConnected: dbStatus,
+    services: {
+      gemini: geminiConfigured ? "configured" : "missing_key",
+    },
+  });
+});
+
+// Temporary AI Provider Diagnostic Endpoint for Production Debugging
+app.get("/api/ai/test", async (req, res) => {
+  const configured = !!process.env.GEMINI_API_KEY;
+  if (!configured) {
+    return res.status(500).json({
+      success: false,
+      provider: "gemini",
+      configured: false,
+      model: "gemini-2.5-flash",
+      status: "failed",
+      providerStatus: 500,
+      errorCode: "MISSING_API_KEY",
+      message: "GEMINI_API_KEY is not configured in environment variables.",
+    });
+  }
+
   try {
     const { generateText } = require("./services/gemini");
-    const { isDBConnected } = require("./config/db");
-    const configured = !!process.env.GEMINI_API_KEY;
-    if (!configured) {
-      return res.status(500).json({ configured: false, provider: "gemini", status: "missing_api_key" });
-    }
-    const testOutput = await generateText("Test connection in 3 words.");
-    res.json({
-      configured: true,
+    const testOutput = await generateText("Connection test in 2 words.");
+    return res.json({
+      success: true,
       provider: "gemini",
+      configured: true,
       model: "gemini-2.5-flash",
       status: "working",
-      dbConnected: isDBConnected(),
-      outputSnippet: testOutput.trim().slice(0, 30),
+      sample: testOutput.trim().slice(0, 30),
     });
   } catch (err) {
-    res.status(err.statusCode || 500).json({
-      configured: !!process.env.GEMINI_API_KEY,
+    const providerStatus = err.statusCode || err.status || 500;
+    const errorCode = err.code || "AI_TEST_FAILED";
+    return res.status(providerStatus).json({
+      success: false,
       provider: "gemini",
+      configured: true,
+      model: "gemini-2.5-flash",
       status: "failed",
-      code: err.statusCode || 500,
+      providerStatus,
+      errorCode,
       message: err.message,
     });
   }

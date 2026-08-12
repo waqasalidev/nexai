@@ -4,8 +4,13 @@ const ExperienceSchema = new mongoose.Schema({
   company: { type: String, default: "" },
   role: { type: String, default: "" },
   duration: { type: String, default: "" },
-  details: { type: String, default: "" },
-});
+  details: {
+    type: mongoose.Schema.Types.Mixed,
+    default: "",
+    get: (v) => (Array.isArray(v) ? v.join("\n") : (v ? String(v) : "")),
+    set: (v) => (Array.isArray(v) ? v.join("\n") : (v ? String(v) : "")),
+  },
+}, { toJSON: { getters: true }, toObject: { getters: true } });
 
 const EducationSchema = new mongoose.Schema({
   school: { type: String, default: "" },

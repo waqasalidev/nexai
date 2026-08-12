@@ -7,19 +7,20 @@ const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 const MODEL_FALLBACK_CHAIN = [
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
-  "gemini-1.5-flash",
 ];
 
 /**
  * Returns a generative model instance for a given model name
  */
 function getModel(modelName = "gemini-2.5-flash") {
-  if (!genAI) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
     const err = new Error("GEMINI_API_KEY is not configured on the server. Please add it to your .env file.");
     err.statusCode = 401;
     err.code = "MISSING_API_KEY";
     throw err;
   }
+  const genAI = new GoogleGenerativeAI(apiKey);
   return genAI.getGenerativeModel({ model: modelName });
 }
 
@@ -302,7 +303,17 @@ Format your response strictly as JSON matching:
 
     const responseText = result.response.text();
     try {
-      return JSON.parse(responseText);
+      const parsed = JSON.parse(responseText);
+      if (parsed && Array.isArray(parsed.experience)) {
+        parsed.experience = parsed.experience.map((exp) => ({
+          ...exp,
+          company: exp.company || "",
+          role: exp.role || "",
+          duration: exp.duration || "",
+          details: Array.isArray(exp.details) ? exp.details.join("\n") : (exp.details ? String(exp.details) : ""),
+        }));
+      }
+      return parsed;
     } catch (err) {
       console.error("JSON parsing error on resume generation:", responseText);
       throw new Error("Failed to parse resume JSON schema from AI model.");

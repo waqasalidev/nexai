@@ -74,8 +74,21 @@ function ResumePage() {
         },
         body: JSON.stringify({ prompt }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to generate resume");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Your session has expired. Please log in again.");
+        } else if (res.status === 403) {
+          throw new Error("AI service authorization failed.");
+        } else if (res.status === 408) {
+          throw new Error("AI request timed out. Please try again.");
+        } else if (res.status === 429) {
+          throw new Error("AI usage limit reached. Please try again later.");
+        } else if (res.status === 503) {
+          throw new Error("AI service is temporarily unavailable.");
+        }
+        throw new Error(data.error?.message || data.message || "Failed to generate resume");
+      }
 
       // Set generated fields
       setSummary(data.resume.content?.summary || "");
