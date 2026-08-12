@@ -64,12 +64,11 @@ router.get("/ai-test", async (req, res) => {
   }
 });
 
-router.use(protect); // protect remaining resume routes
-
-router.get("/", listResumes);
-router.post("/", createResume);
-router.post("/generate", generateResume);
-router.put("/:id", updateResume);
-router.delete("/:id", deleteResume);
+// Protected Resume Endpoints
+router.get("/", protect, listResumes);
+router.post("/", protect, createResume);
+router.post("/generate", protect, generateResume);
+router.put("/:id", protect, updateResume);
+router.delete("/:id", protect, deleteResume);
 
 module.exports = router;
