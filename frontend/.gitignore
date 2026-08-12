@@ -13,6 +13,7 @@ dist-ssr
 .output
 .vinxi
 .tanstack/**
+.tanstack-cache/**
 .nitro
 *.local
 
