@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="nexai-light-grad-1" x1="60" y1="60" x2="450" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7e22ce" />
+      <stop offset="50%" stop-color="#4338ca" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="nexai-light-grad-2" x1="120" y1="400" x2="400" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#e11d48" />
+    </linearGradient>
+  </defs>
+
+  <rect x="24" y="24" width="464" height="464" rx="108" fill="#ffffff" stroke="url(#nexai-light-grad-1)" stroke-width="8" stroke-opacity="0.3" />
+  
+  <!-- Left Chamfered N Pillar -->
+  <path d="M 124 388 V 164 L 212 116 V 340 Z" fill="url(#nexai-light-grad-1)" />
+
+  <!-- Diagonal Neural Bridge -->
+  <path d="M 196 156 L 316 356 V 212 L 236 124 Z" fill="url(#nexai-light-grad-2)" />
+
+  <!-- Right Chamfered N Pillar -->
+  <path d="M 300 124 V 348 L 388 396 V 172 Z" fill="url(#nexai-light-grad-1)" />
+
+  <!-- Quantum AI Core Node -->
+  <circle cx="256" cy="256" r="28" fill="#0284c7" />
+  <circle cx="256" cy="256" r="12" fill="#ffffff" />
+</svg>

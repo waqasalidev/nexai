@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Send, ArrowLeft, Mail, MessageSquare, Shield, Globe } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
 
@@ -163,9 +164,10 @@ function ContactPage() {
         </motion.div>
       </div>
 
-      <footer className="border-t border-border/50 py-10 px-6 text-center text-sm text-muted-foreground print:hidden">
-        <div className="font-display">
-          <span className="gradient-text font-bold">NexAI</span> — The future of work, today.
+      <footer className="border-t border-border/50 py-10 px-6 text-center text-sm text-muted-foreground print:hidden flex flex-col items-center justify-center gap-3">
+        <Logo />
+        <div className="text-xs text-muted-foreground">
+          The future of work, powered by next-gen artificial intelligence.
         </div>
       </footer>
     </div>

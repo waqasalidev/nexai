@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Logo } from "@/components/Logo";
 
 export function Navbar() {
   const { user } = useAuth();
@@ -27,16 +28,7 @@ export function Navbar() {
       className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6"
     >
       <div className="mx-auto mt-4 flex max-w-7xl items-center justify-between rounded-2xl glass px-5 py-3 border border-border/40">
-        <Link to="/" className="flex items-center gap-2 cursor-pointer">
-          <div className="relative">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent glow-sm grid place-items-center">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
-            </div>
-          </div>
-          <span className="font-display text-lg font-bold tracking-tight">
-            Nex<span className="gradient-text">AI</span>
-          </span>
-        </Link>
+        <Logo />
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">

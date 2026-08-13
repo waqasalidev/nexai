@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { HeroScene } from "@/components/HeroScene";
 import { Navbar } from "@/components/Navbar";
+import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -321,9 +322,10 @@ function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-border/50 py-10 px-6 text-center text-sm text-muted-foreground">
-        <div className="font-display">
-          <span className="gradient-text font-bold">NexAI</span> — The future of work, today.
+      <footer className="border-t border-border/50 py-10 px-6 text-center text-sm text-muted-foreground flex flex-col items-center justify-center gap-3">
+        <Logo />
+        <div className="text-xs text-muted-foreground">
+          The future of work, powered by next-gen artificial intelligence.
         </div>
       </footer>
     </div>

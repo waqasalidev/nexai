@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Logo } from "@/components/Logo";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -62,13 +63,8 @@ function AuthPage() {
         animate={{ opacity: 1, y: 0 }}
         className="relative glass-strong w-full max-w-md rounded-3xl p-6 sm:p-8 neon-border"
       >
-        <div className="flex items-center gap-2 mb-6">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-accent grid place-items-center glow-sm">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-display text-xl font-bold">
-            Nex<span className="gradient-text">AI</span>
-          </span>
+        <div className="mb-6">
+          <Logo />
         </div>
 
         <h1 className="font-display text-2xl font-bold">
